@@ -1,0 +1,14 @@
+[
+    {
+        "idAluno": 1,
+        "idTurma": 1
+    },
+    {
+        "idAluno": 2,
+        "idTurma": 1
+    },
+    {
+        "idAluno": 3,
+        "idTurma": 2
+    }
+]

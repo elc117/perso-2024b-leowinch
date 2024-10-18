@@ -4,7 +4,7 @@
 import Web.Scotty
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Data.Text.Lazy (Text, pack, unpack)
-
+--import Data.Aeson (FromJSON, ToJSON, decode, encode)
 
 -- tipo para Aluno
 data Aluno = Aluno
@@ -12,6 +12,9 @@ data Aluno = Aluno
     , nome :: String
     , cpf :: String
     } deriving (Show)
+
+--instance FromJSON Aluno
+--instance ToJSON Aluno 
 
 
 -- lista de alunos (Teste para funções iniciais)
@@ -28,6 +31,9 @@ data Turma = Turma
     { turmaId   :: Int
     , nomeTurma :: String
     } deriving (Show)
+
+--instance FromJSON Turma
+--instance ToJSON Turma
 
 -- Criando uma lista de turmas (Teste para funções iniciais)
 listaDeTurmas :: [Turma]
@@ -72,6 +78,9 @@ adicionarTurma novaTurma listaTurmas = novaTurma : listaTurmas
 adicionarAlunoTurma :: AlunoTurma -> [AlunoTurma] -> [AlunoTurma]
 adicionarAlunoTurma novoAlunoTurma listaAlunoTurma = novoAlunoTurma : listaAlunoTurma 
 
+filtrarTurmasDeUmAluno :: Int -> [Turma] -> [AlunoTurma] -> [Turma]
+filtrarTurmasDeUmAluno idaluno listaTurmas listaAlunoTurma = [turma | turma <- listaTurmas, any (\x -> idAluno x == idaluno && idTurma x == turmaId turma) listaAlunoTurma] 
+
 -- filtra um aluno pelo id e retorna o mesmo (ou Nothing caso não tenha um aluno correspondente)
 filtrarAlunoId :: [Aluno] -> Int -> Maybe Aluno
 filtrarAlunoId listaAlunos id = 
@@ -87,5 +96,49 @@ main = scotty 3000 $ do
     -- get para mostrar todos os alunos 
     get "/alunos" $ do
         setHeader "Content-type" "text/plain"
-        let responseText = unlines (map show listaDeAlunos)
-        text (pack responseText)
+        let response = unlines (map show listaDeAlunos)
+        text (pack response)
+    
+    -- get para mostrar alunos de uma turma
+    get "/alunosdeumaturma/:idturma" $ do
+       setHeader "Content-type" "text/plain"
+       idTurmaDesejada <- param "idturma" :: ActionM Int
+       let alunosTurma = buscarAlunosTurma idTurmaDesejada listaDeAlunos listaAlunoTurma
+       let response = unlines (map show alunosTurma)
+       text (pack response)
+
+    -- get para mostrar todas as turmas
+    get "/turmas" $ do
+        setHeader "Content-type" "text/plain"
+        let response = unlines (map show listaDeTurmas)
+        text(pack response) 
+   
+    -- get para mostrar as turmas de um aluno
+    get "/turmasdeumaluno/:idaluno" $ do
+       setHeader "Content-type" "text/plain"
+       idaluno <- param "idaluno" :: ActionM Int
+       let turmasAluno = filtrarTurmasDeUmAluno idaluno listaDeTurmas listaAlunoTurma
+       let response = unlines (map show turmasAluno)
+       text(pack response)
+
+    -- get para mostrar as turmas     
+    get "/turmas" $ do
+        setHeader "Content-type" "text/plain"
+        let response = unlines (map show listaDeTurmas)
+        text(pack response)
+
+    -- get para mostar uma turma filtrada por id
+    get "/turmaporid/:idturma" $ do
+        setHeader "Content-type" "text/plain"
+        idTurma <- param "idturma" :: ActionM Int
+        let turma = filter (\x -> turmaId x == idTurma) listaDeTurmas
+        let response = show turma
+        text(pack response)
+
+    -- get para mostrar aluno filtrado por id
+    get "/alunoporid/:idaluno" $ do
+        setHeader "Content-type" "text/plain"
+        idAluno <- param "idaluno" :: ActionM Int
+        let aluno = filter (\x -> alunoId x == idAluno) listaDeAlunos
+        let response = show aluno
+        text(pack response)
